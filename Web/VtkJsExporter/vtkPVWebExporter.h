@@ -26,6 +26,11 @@
 #include "vtkJSONSceneExporter.h"
 #include "vtkPVWebExporterModule.h" // needed for exports
 
+#include <map>
+#include <string>
+
+class vtkCamera;
+
 class VTKPVWEBEXPORTER_EXPORT vtkPVWebExporter : public vtkJSONSceneExporter
 {
 public:
@@ -41,6 +46,16 @@ public:
   vtkGetStringMacro(ParaViewGlanceHTML);
   //@}
 
+  //@{
+  /**
+   * Specify extra view points to be written out to the file.
+   *
+   * The key is the name of the view point.
+   */
+  using ViewPointsType = std::map<std::string, vtkCamera*>;
+  vtkSetMacro(ViewPoints, ViewPointsType);
+  vtkGetMacro(ViewPoints, ViewPointsType);
+
 protected:
   vtkPVWebExporter();
   ~vtkPVWebExporter() override;
@@ -53,6 +68,7 @@ private:
   void operator=(const vtkPVWebExporter&) = delete;
 
   char* ParaViewGlanceHTML;
+  ViewPointsType ViewPoints;
 };
 
 #endif

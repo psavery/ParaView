@@ -57,6 +57,7 @@
 #include "vtkOpenVRRenderWindowInteractor.h"
 #include "vtkOpenVRRenderer.h"
 #include "vtkPVOpenVRCollaborationClient.h"
+#include "vtkPVWebExporter.h"
 #include "vtkPVXMLElement.h"
 #include "vtkPlaneSource.h"
 #include "vtkPointHandleRepresentation3D.h"
@@ -2115,6 +2116,48 @@ void vtkPVOpenVRHelper::ExportLocationsAsSkyboxes(vtkSMViewProxy* smview)
           "  \"name\": \"orientation\" } }, "
           "\"arguments_order\": [\"orientation\", \"poseIndex\"], "
           "\"metadata\": {\"backgroundColor\": \"rgb(0, 0, 0)\"} }";
+}
+
+void vtkPVOpenVRHelper::ExportToVtkJs(const char* outFile,
+                                      vtkSMViewProxy* smview)
+{
+  this->SMView = smview;
+  this->View = vtkPVRenderView::SafeDownCast(smview->GetClientSideView());
+
+  vtkPVWebExporter::ViewPointsType viewPoints;
+  std::vector<vtkNew<vtkCamera>> cameras;
+  for (auto& loci : this->Locations)
+  {
+    auto& i = loci.first;
+    auto& loc = loci.second;
+
+    vtkOpenVRCameraPose& pose = *loc.Pose;
+
+    // Make a new camera
+    cameras.emplace_back();
+    auto* camera = cameras.back().Get();
+
+    // Calculate the focal point
+    double focalPoint[3];
+    for (int j = 0; j < 3; ++j)
+    {
+      focalPoint[j] = pose.Position[j] + pose.ViewDirection[j] * pose.Distance;
+    }
+
+    // Set everything we can on the camera
+    camera->SetPosition(pose.Position);
+    camera->SetFocalPoint(focalPoint);
+    camera->SetViewUp(pose.PhysicalViewUp);
+
+    std::string name = "View " + std::to_string(i);
+    viewPoints[name] = camera;
+  }
+
+  vtkNew<vtkPVWebExporter> exporter;
+  exporter->SetViewPoints(viewPoints);
+  exporter->SetRenderWindow(smview->GetRenderWindow());
+  exporter->SetFileName(outFile);
+  exporter->Update();
 }
 
 namespace

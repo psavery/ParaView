@@ -18,6 +18,8 @@
 #include "vtkPVXMLElement.h"
 #include "vtkRenderViewBase.h"
 
+#include <QFileDialog>
+
 #include <sstream>
 
 class pqOpenVRDockPanel::pqInternals : public Ui::pqOpenVRDockPanel
@@ -41,6 +43,8 @@ void pqOpenVRDockPanel::constructor()
     SLOT(exportLocationsAsSkyboxes()));
   connect(this->Internals->exportLocationsAsViewButton, SIGNAL(clicked()), this,
     SLOT(exportLocationsAsView()));
+  connect(this->Internals->exportToVtkJsButton, SIGNAL(clicked()), this,
+    SLOT(exportToVtkJs()));
   connect(
     this->Internals->multisamples, SIGNAL(stateChanged(int)), this, SLOT(multiSampleChanged(int)));
   connect(this->Internals->cropThickness, SIGNAL(textChanged(const QString&)), this,
@@ -156,6 +160,25 @@ void pqOpenVRDockPanel::exportLocationsAsView()
   vtkSMViewProxy* smview = view->getViewProxy();
 
   this->Helper->ExportLocationsAsView(smview);
+}
+
+void pqOpenVRDockPanel::exportToVtkJs()
+{
+  auto file = QFileDialog::getSaveFileName(this, "Export to VTK.js", "",
+                                           "VTK.js files (*.vtkjs)");
+
+  if (!file.isEmpty())
+  {
+    if (!file.endsWith(".vtkjs"))
+    {
+      file += ".vtkjs";
+    }
+
+    pqView* view = pqActiveObjects::instance().activeView();
+    vtkSMViewProxy* smview = view->getViewProxy();
+
+    this->Helper->ExportToVtkJs(file.toLatin1().data(), smview);
+  }
 }
 
 void pqOpenVRDockPanel::multiSampleChanged(int state)

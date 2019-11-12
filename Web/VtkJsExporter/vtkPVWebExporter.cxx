@@ -19,6 +19,7 @@
 
 #if VTK_MODULE_ENABLE_VTK_PythonInterpreter && VTK_MODULE_ENABLE_VTK_Python &&                     \
   VTK_MODULE_ENABLE_VTK_WrappingPythonCore
+#include <vtkCamera.h>
 #include "vtkPython.h"
 #include "vtkPythonInterpreter.h"
 #include "vtkPythonUtil.h"
@@ -43,6 +44,31 @@ void vtkPVWebExporter::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
 }
+
+#if VTK_MODULE_ENABLE_VTK_PythonInterpreter && VTK_MODULE_ENABLE_VTK_Python &&                     \
+  VTK_MODULE_ENABLE_VTK_WrappingPythonCore
+namespace {
+//----------------------------------------------------------------------------
+vtkSmartPyObject createViewPointsDict(
+  const vtkPVWebExporter::ViewPointsType& viewPoints)
+{
+  // This function should be called with the Python interpreter
+  // already initialized.
+
+  vtkSmartPyObject viewPointsDict = PyDict_New();
+  for (const auto& e: viewPoints)
+  {
+    const auto& name = e.first;
+    auto* cameraPtr = e.second;
+
+    vtkSmartPyObject camera = vtkPythonUtil::GetObjectFromPointer(cameraPtr);
+    PyDict_SetItemString(viewPointsDict, name.c_str(), camera);
+  }
+
+  return std::move(viewPointsDict);
+}
+}
+#endif
 
 //----------------------------------------------------------------------------
 void vtkPVWebExporter::Write()
@@ -70,6 +96,21 @@ void vtkPVWebExporter::Write()
     {
       vtkGenericWarningMacro("Failed to rename datasets using ParaView proxy name");
       throw 1;
+    }
+
+    // Add additional viewpoints to the file, if there are any
+    if (!this->ViewPoints.empty())
+    {
+      vtkSmartPyObject viewPointsDict = createViewPointsDict(this->ViewPoints);
+
+      PyObject_CallMethod(pvmodule, const_cast<char*>("addViewPoints"),
+        const_cast<char*>("(sO)"), const_cast<char*>(this->FileName),
+        viewPointsDict.GetPointer());
+      if (PyErr_Occurred())
+      {
+        vtkGenericWarningMacro("Failed to add viewpoints to vtkjs file");
+        throw 1;
+      }
     }
 
     vtkSmartPyObject module(PyImport_ImportModule("vtk.web.vtkjs_helper"));

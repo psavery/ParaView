@@ -72,3 +72,25 @@ def applyParaViewNaming(directoryPath):
 
     with open(filePath, 'w') as file:
         file.write(json.dumps(scene, indent=2))
+
+
+# -----------------------------------------------------------------------------
+
+def addViewPoints(directoryPath, viewPoints):
+    # The viewPoints is a dict of vtkCamera objects
+
+    cameraViewPoints = {}
+    for name, camera in viewPoints.items():
+        cameraViewPoints[name] = {
+            'focalPoint': camera.GetFocalPoint(),
+            'position': camera.GetPosition(),
+            'viewUp': camera.GetViewUp()
+        }
+
+    filePath = os.path.join(directoryPath, 'index.json')
+    with open(filePath) as file:
+        root = json.load(file)
+        root["cameraViewPoints"] = cameraViewPoints
+
+    with open(filePath, 'w') as file:
+        file.write(json.dumps(root, indent=2))

@@ -66,6 +66,7 @@ target_link_libraries(OpenVR
   PRIVATE
     ParaView::ClientServerCoreRendering
     ParaView::Core
+    ParaView::PVWebExporter
     ParaView::ServerManagerCore
     ParaView::ServerManagerRendering
     ParaView::VTKExtensionsRendering

@@ -55,6 +55,7 @@ protected slots:
 
   void exportLocationsAsSkyboxes();
   void exportLocationsAsView();
+  void exportToVtkJs();
 
   void multiSampleChanged(int state);
   void defaultCropThicknessChanged(const QString& text);

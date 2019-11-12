@@ -7,6 +7,7 @@ CONDITION
 REQUIRES_MODULES
   ParaView::ClientServerCoreRendering
   ParaView::Core
+  ParaView::PVWebExporter
   ParaView::ServerManagerCore
   ParaView::ServerManagerRendering
   ParaView::VTKExtensionsRendering

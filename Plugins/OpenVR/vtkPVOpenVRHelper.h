@@ -120,6 +120,9 @@ public:
   // stored as vtp files.
   void ExportLocationsAsView(vtkSMViewProxy* view);
 
+  // Export the data to VTK.js
+  void ExportToVtkJs(const char* outFile, vtkSMViewProxy* view);
+
   // support for collaboration. The collaboration client
   // will always be set even when collaboration is not
   // enabled.
