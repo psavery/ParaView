@@ -55,6 +55,24 @@ public:
   using ViewPointsType = std::map<std::string, vtkCamera*>;
   vtkSetMacro(ViewPoints, ViewPointsType);
   vtkGetMacro(ViewPoints, ViewPointsType);
+  //@}
+
+  //@{
+  /**
+   * Specify the visibilities for each view point.
+   *
+   * The "ViewPointsVisibilitiesType" key is the name of the view point.
+   * The "VisibilitiesType" key is the representation proxy.
+   *
+   * "vtkObjectBase*" is used instead of "vtkSMProxy*" so we don't need
+   * to include vtkSMProxy.h (and add it as a cmake dependency) in order
+   * to use vtkPythonUtil::GetObjectFromPointer() on it.
+   */
+  using VisibilitiesType = std::map<vtkObjectBase*, bool>;
+  using ViewPointsVisibilitiesType = std::map<std::string, VisibilitiesType>;
+  vtkSetMacro(ViewPointsVisibilities, ViewPointsVisibilitiesType);
+  vtkGetMacro(ViewPointsVisibilities, ViewPointsVisibilitiesType);
+  //@}
 
 protected:
   vtkPVWebExporter();
@@ -69,6 +87,7 @@ private:
 
   char* ParaViewGlanceHTML;
   ViewPointsType ViewPoints;
+  ViewPointsVisibilitiesType ViewPointsVisibilities;
 };
 
 #endif

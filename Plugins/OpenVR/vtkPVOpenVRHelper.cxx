@@ -2125,6 +2125,7 @@ void vtkPVOpenVRHelper::ExportToVtkJs(const char* outFile,
   this->View = vtkPVRenderView::SafeDownCast(smview->GetClientSideView());
 
   vtkPVWebExporter::ViewPointsType viewPoints;
+  vtkPVWebExporter::ViewPointsVisibilitiesType viewPointsVisibilities;
   std::vector<vtkNew<vtkCamera>> cameras;
   for (auto& loci : this->Locations)
   {
@@ -2151,10 +2152,16 @@ void vtkPVOpenVRHelper::ExportToVtkJs(const char* outFile,
 
     std::string name = "View " + std::to_string(i);
     viewPoints[name] = camera;
+
+    vtkPVWebExporter::VisibilitiesType visibility;
+    // The map key gets converted to vtkObjectBase*
+    visibility.insert(loc.Visibility.begin(), loc.Visibility.end());
+    viewPointsVisibilities[name] = std::move(visibility);
   }
 
   vtkNew<vtkPVWebExporter> exporter;
   exporter->SetViewPoints(viewPoints);
+  exporter->SetViewPointsVisibilities(viewPointsVisibilities);
   exporter->SetRenderWindow(smview->GetRenderWindow());
   exporter->SetFileName(outFile);
   exporter->Update();

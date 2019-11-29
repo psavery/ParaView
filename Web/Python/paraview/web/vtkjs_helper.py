@@ -77,14 +77,38 @@ def applyParaViewNaming(directoryPath):
 # -----------------------------------------------------------------------------
 
 def addViewPoints(directoryPath, viewPoints):
-    # The viewPoints is a dict of vtkCamera objects
+    # The viewPoints is a dict structured like so:
+    #
+    # name1: {
+    #     'camera': vtkCamera,
+    #     'show': [ repProxy1, repProxy2, ... ],
+    #     'hide': [ repProxy3, ...]
+    # },
+    # name2: { ... }
+
+    sourceNames = getAllNames()
 
     cameraViewPoints = {}
-    for name, camera in viewPoints.items():
+    for name, viewPoint in viewPoints.items():
+        # Convert the representation proxies into data set names
+        # This also takes into account the name duplication renaming strategy
+        show = [x.GetClientSideObject().GetActiveRepresentation().GetActor()
+                for x in viewPoint['show']]
+        hide = [x.GetClientSideObject().GetActiveRepresentation().GetActor()
+                for x in viewPoint['hide']]
+
+        show = [findName(sourceNames, x, '') for x in show]
+        hide = [findName(sourceNames, x, '') for x in hide]
+
+        camera = viewPoint['camera']
         cameraViewPoints[name] = {
-            'focalPoint': camera.GetFocalPoint(),
-            'position': camera.GetPosition(),
-            'viewUp': camera.GetViewUp()
+            'camera': {
+                'focalPoint': camera.GetFocalPoint(),
+                'position': camera.GetPosition(),
+                'viewUp': camera.GetViewUp()
+            },
+            'show': show,
+            'hide': hide
         }
 
     filePath = os.path.join(directoryPath, 'index.json')

@@ -19,7 +19,7 @@
 
 #if VTK_MODULE_ENABLE_VTK_PythonInterpreter && VTK_MODULE_ENABLE_VTK_Python &&                     \
   VTK_MODULE_ENABLE_VTK_WrappingPythonCore
-#include <vtkCamera.h>
+#include "vtkCamera.h"
 #include "vtkPython.h"
 #include "vtkPythonInterpreter.h"
 #include "vtkPythonUtil.h"
@@ -50,22 +50,42 @@ void vtkPVWebExporter::PrintSelf(ostream& os, vtkIndent indent)
 namespace {
 //----------------------------------------------------------------------------
 vtkSmartPyObject createViewPointsDict(
-  const vtkPVWebExporter::ViewPointsType& viewPoints)
+  const vtkPVWebExporter::ViewPointsType& viewPoints,
+  const vtkPVWebExporter::ViewPointsVisibilitiesType& viewPointsVisibilities)
 {
   // This function should be called with the Python interpreter
   // already initialized.
 
-  vtkSmartPyObject viewPointsDict = PyDict_New();
+  vtkSmartPyObject res = PyDict_New();
   for (const auto& e: viewPoints)
   {
     const auto& name = e.first;
     auto* cameraPtr = e.second;
 
-    vtkSmartPyObject camera = vtkPythonUtil::GetObjectFromPointer(cameraPtr);
-    PyDict_SetItemString(viewPointsDict, name.c_str(), camera);
-  }
+    vtkSmartPyObject viewPointDict = PyDict_New();
 
-  return std::move(viewPointsDict);
+    vtkSmartPyObject camera = vtkPythonUtil::GetObjectFromPointer(cameraPtr);
+    PyDict_SetItemString(viewPointDict, "camera", camera);
+
+    // Try to get the visibilities as well
+    auto it = viewPointsVisibilities.find(name);
+    if (it != viewPointsVisibilities.end())
+    {
+      vtkSmartPyObject showList = PyList_New(0);
+      vtkSmartPyObject hideList = PyList_New(0);
+      for (const auto& e: it->second)
+      {
+        vtkSmartPyObject proxy = vtkPythonUtil::GetObjectFromPointer(e.first);
+        auto& listToUse = e.second ? showList : hideList;
+        PyList_Append(listToUse, proxy);
+      }
+      PyDict_SetItemString(viewPointDict, "show", showList);
+      PyDict_SetItemString(viewPointDict, "hide", hideList);
+    }
+
+    PyDict_SetItemString(res, name.c_str(), std::move(viewPointDict));
+  }
+  return std::move(res);
 }
 }
 #endif
@@ -101,7 +121,8 @@ void vtkPVWebExporter::Write()
     // Add additional viewpoints to the file, if there are any
     if (!this->ViewPoints.empty())
     {
-      vtkSmartPyObject viewPointsDict = createViewPointsDict(this->ViewPoints);
+      vtkSmartPyObject viewPointsDict = createViewPointsDict(
+        this->ViewPoints, this->ViewPointsVisibilities);
 
       PyObject_CallMethod(pvmodule, const_cast<char*>("addViewPoints"),
         const_cast<char*>("(sO)"), const_cast<char*>(this->FileName),
