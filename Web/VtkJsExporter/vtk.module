@@ -6,6 +6,7 @@ CONDITION
   PARAVIEW_ENABLE_WEB
 DEPENDS
   VTK::IOExport
+  ParaView::ServerManagerRendering
 OPTIONAL_DEPENDS
   VTK::WebPython
   VTK::Python

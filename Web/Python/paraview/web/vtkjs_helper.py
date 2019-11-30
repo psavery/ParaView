@@ -88,6 +88,11 @@ def addViewPoints(directoryPath, viewPoints):
 
     sourceNames = getAllNames()
 
+    # These are data sets that will not be written out. Do not
+    # include them in the hide list.
+    doNotHideList = [name for name, actor in sourceNames.items()
+                     if not actor.GetVisibility()]
+
     cameraViewPoints = {}
     for name, viewPoint in viewPoints.items():
         # Convert the representation proxies into data set names
@@ -99,6 +104,8 @@ def addViewPoints(directoryPath, viewPoints):
 
         show = [findName(sourceNames, x, '') for x in show]
         hide = [findName(sourceNames, x, '') for x in hide]
+
+        hide = [x for x in hide if x not in doNotHideList]
 
         camera = viewPoint['camera']
         cameraViewPoints[name] = {

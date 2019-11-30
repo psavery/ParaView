@@ -16,6 +16,13 @@
 #include "vtkPVWebExporter.h"
 
 #include "vtkObjectFactory.h"
+#include "vtkSMPropertyHelper.h"
+#include "vtkSMProxyManager.h"
+#include "vtkSMProxySelectionModel.h"
+#include "vtkSMRepresentationProxy.h"
+#include "vtkSMSessionProxyManager.h"
+#include "vtkSMUndoStackBuilder.h"
+#include "vtkSMViewProxy.h"
 
 #if VTK_MODULE_ENABLE_VTK_PythonInterpreter && VTK_MODULE_ENABLE_VTK_Python &&                     \
   VTK_MODULE_ENABLE_VTK_WrappingPythonCore
@@ -90,9 +97,139 @@ vtkSmartPyObject createViewPointsDict(
 }
 #endif
 
+namespace {
+//----------------------------------------------------------------------------
+std::vector<vtkSMRepresentationProxy*> getRepsToShow(
+  const vtkPVWebExporter::ViewPointsVisibilitiesType& viewPointsVisibilities)
+{
+  // Get a vector of unique representation proxies that are currently
+  // not visible, but are visible in one or more view points (and thus
+  // need to be written out).
+  std::vector<vtkSMRepresentationProxy*> ret;
+
+  // Loop through view points
+  for (const auto& e: viewPointsVisibilities)
+  {
+    // Loop through the visibilities of each actor
+    for (const auto& v: e.second)
+    {
+      // Is the actor visible in this view point?
+      if (v.second)
+      {
+        auto* rep = vtkSMRepresentationProxy::SafeDownCast(v.first);
+        if (rep)
+        {
+          bool vis = vtkSMPropertyHelper(rep, "Visibility").GetAsInt();
+          if (!vis && std::find(ret.begin(), ret.end(), rep) == ret.end())
+          {
+            // If it's not currently visible, and not already in our
+            // vector, let's add it.
+            ret.push_back(rep);
+          }
+        }
+      }
+    }
+  }
+
+  return ret;
+}
+
+//----------------------------------------------------------------------------
+bool blockUndoStack(bool block)
+{
+  // Returns the previous state
+  auto* usb = vtkSMProxyManager::GetProxyManager()->GetUndoStackBuilder();
+  if (!usb)
+  {
+    return false;
+  }
+
+  bool prev = usb->GetIgnoreAllChanges();
+  usb->SetIgnoreAllChanges(block);
+  return prev;
+}
+
+//----------------------------------------------------------------------------
+vtkSMViewProxy* getActiveView()
+{
+  auto* pxm = vtkSMProxyManager::GetProxyManager()->GetActiveSessionProxyManager();
+  auto* viewSM = pxm->GetSelectionModel("ActiveView");
+  if (!viewSM)
+  {
+    vtkGenericWarningMacro("Failed to get ActiveView.");
+    return nullptr;
+  }
+  return vtkSMViewProxy::SafeDownCast(viewSM->GetCurrentProxy());
+}
+
+//----------------------------------------------------------------------------
+void setVisibilities(const std::vector<vtkSMRepresentationProxy*>& reps,
+                     bool visible)
+{
+  if (reps.empty())
+  {
+    // Nothing to do...
+    return;
+  }
+
+  auto* view = getActiveView();
+  if (!view)
+  {
+    return;
+  }
+
+  // Don't modify the undo stack
+  bool prevBlocked = blockUndoStack(true);
+
+  for (auto* rep: reps)
+  {
+    vtkSMPropertyHelper(rep, "Visibility").Set(visible);
+    rep->UpdateVTKObjects();
+  }
+
+  // A render is required to update the actors and mappers
+  view->StillRender();
+
+  blockUndoStack(prevBlocked);
+}
+
+//----------------------------------------------------------------------------
+struct HideRepsOnDestruct
+{
+  // Just a helper struct to automatically hide the stored
+  // representations when this is destroyed...
+
+  ~HideRepsOnDestruct()
+  {
+    try
+    {
+      setVisibilities(this->RepsToHide, false);
+    }
+    catch (...)
+    {
+    }
+  }
+  std::vector<vtkSMRepresentationProxy*> RepsToHide;
+};
+}
+
 //----------------------------------------------------------------------------
 void vtkPVWebExporter::Write()
 {
+  HideRepsOnDestruct repsHider;
+  if (!this->ViewPoints.empty() && !this->ViewPointsVisibilities.empty())
+  {
+    // There may be actors which are currently not visible in the
+    // main window, but are visible in a different view point.
+    // In order for the data sets of these actors to be written out,
+    // we need to make them visible and render, so that the mappers
+    // will be up to date. The actors will become invisible again after
+    // writing is complete.
+    std::vector<vtkSMRepresentationProxy*> reps = getRepsToShow(this->ViewPointsVisibilities);
+    setVisibilities(reps, true);
+    repsHider.RepsToHide = reps;
+  }
+
   this->Superclass::Write();
 
 #if VTK_MODULE_ENABLE_VTK_PythonInterpreter && VTK_MODULE_ENABLE_VTK_Python &&                     \
