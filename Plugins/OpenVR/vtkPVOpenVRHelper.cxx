@@ -2119,7 +2119,8 @@ void vtkPVOpenVRHelper::ExportLocationsAsSkyboxes(vtkSMViewProxy* smview)
 }
 
 void vtkPVOpenVRHelper::ExportToVtkJs(const char* outFile,
-                                      vtkSMViewProxy* smview)
+                                      vtkSMViewProxy* smview,
+                                      const char* glanceFile)
 {
   this->SMView = smview;
   this->View = vtkPVRenderView::SafeDownCast(smview->GetClientSideView());
@@ -2164,6 +2165,8 @@ void vtkPVOpenVRHelper::ExportToVtkJs(const char* outFile,
   exporter->SetViewPointsVisibilities(viewPointsVisibilities);
   exporter->SetRenderWindow(smview->GetRenderWindow());
   exporter->SetFileName(outFile);
+  exporter->SetParaViewGlanceHTML(glanceFile);
+
   exporter->Update();
 }
 

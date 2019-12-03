@@ -174,10 +174,19 @@ void pqOpenVRDockPanel::exportToVtkJs()
       file += ".vtkjs";
     }
 
+    auto glanceFile = QFileDialog::getOpenFileName(
+      this, "Embed in ParaView Glance File (Optional)",
+      "ParaView Glance files (*.html)");
+
+    auto glanceFileLatin1 = glanceFile.toLatin1();
+    const char* glanceFileCStr = (
+      glanceFile.isEmpty() ? nullptr : glanceFileLatin1.data());
+
     pqView* view = pqActiveObjects::instance().activeView();
     vtkSMViewProxy* smview = view->getViewProxy();
 
-    this->Helper->ExportToVtkJs(file.toLatin1().data(), smview);
+    this->Helper->ExportToVtkJs(file.toLatin1().data(), smview,
+                                glanceFileCStr);
   }
 }
 
