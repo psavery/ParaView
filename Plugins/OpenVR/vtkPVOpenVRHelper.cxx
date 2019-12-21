@@ -2118,9 +2118,9 @@ void vtkPVOpenVRHelper::ExportLocationsAsSkyboxes(vtkSMViewProxy* smview)
           "\"metadata\": {\"backgroundColor\": \"rgb(0, 0, 0)\"} }";
 }
 
-void vtkPVOpenVRHelper::ExportToVtkJs(const char* outFile,
-                                      vtkSMViewProxy* smview,
-                                      const char* glanceFile)
+void vtkPVOpenVRHelper::ExportToVtkJs(const char* outFile, vtkSMViewProxy* smview,
+  const char* glanceFile, bool writeTextures, bool writeTextureLODs, const char* textureLODsBaseUrl,
+  size_t textureLODsBaseSize)
 {
   this->SMView = smview;
   this->View = vtkPVRenderView::SafeDownCast(smview->GetClientSideView());
@@ -2161,6 +2161,10 @@ void vtkPVOpenVRHelper::ExportToVtkJs(const char* outFile,
   }
 
   vtkNew<vtkPVWebExporter> exporter;
+  exporter->SetWriteTextures(writeTextures);
+  exporter->SetWriteTextureLODs(writeTextureLODs);
+  exporter->SetTextureLODsBaseUrl(textureLODsBaseUrl);
+  exporter->SetTextureLODsBaseSize(textureLODsBaseSize);
   exporter->SetViewPoints(viewPoints);
   exporter->SetViewPointsVisibilities(viewPointsVisibilities);
   exporter->SetRenderWindow(smview->GetRenderWindow());

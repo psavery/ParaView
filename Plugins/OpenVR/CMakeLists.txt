@@ -2,6 +2,8 @@ find_package(Qt5 REQUIRED COMPONENTS Widgets Network)
 
 set(interfaces)
 set(sources
+  pqExportToVtkJsDialog.cxx
+  pqExportToVtkJsDialog.h
   pqOpenVRControls.cxx
   pqOpenVRControls.h
   pqOpenVRDockPanel.cxx
@@ -31,7 +33,7 @@ list(APPEND sources
 
   paraview_add_plugin(OpenVR
   VERSION "1.2"
-  UI_FILES pqOpenVRDockPanel.ui pqOpenVRControls.ui
+  UI_FILES pqOpenVRDockPanel.ui pqOpenVRControls.ui pqExportToVtkJsDialog.ui
   UI_INTERFACES ${interfaces}
   SOURCES ${sources}
   )

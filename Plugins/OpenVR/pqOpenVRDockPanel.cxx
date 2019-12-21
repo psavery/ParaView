@@ -4,6 +4,7 @@
 #include "pqActiveObjects.h"
 #include "pqAnimationManager.h"
 #include "pqAnimationScene.h"
+#include "pqExportToVtkJsDialog.h"
 #include "pqOpenVRControls.h"
 #include "pqPVApplicationCore.h"
 #include "pqRenderView.h"
@@ -17,8 +18,6 @@
 #include "vtkPVRenderView.h"
 #include "vtkPVXMLElement.h"
 #include "vtkRenderViewBase.h"
-
-#include <QFileDialog>
 
 #include <sstream>
 
@@ -164,30 +163,26 @@ void pqOpenVRDockPanel::exportLocationsAsView()
 
 void pqOpenVRDockPanel::exportToVtkJs()
 {
-  auto file = QFileDialog::getSaveFileName(this, "Export to VTK.js", "",
-                                           "VTK.js files (*.vtkjs)");
+  pqExportToVtkJsDialog dialog;
 
-  if (!file.isEmpty())
+  if (!dialog.exec())
   {
-    if (!file.endsWith(".vtkjs"))
-    {
-      file += ".vtkjs";
-    }
-
-    auto glanceFile = QFileDialog::getOpenFileName(
-      this, "Embed in ParaView Glance File (Optional)",
-      "ParaView Glance files (*.html)");
-
-    auto glanceFileLatin1 = glanceFile.toLatin1();
-    const char* glanceFileCStr = (
-      glanceFile.isEmpty() ? nullptr : glanceFileLatin1.data());
-
-    pqView* view = pqActiveObjects::instance().activeView();
-    vtkSMViewProxy* smview = view->getViewProxy();
-
-    this->Helper->ExportToVtkJs(file.toLatin1().data(), smview,
-                                glanceFileCStr);
+    return;
   }
+
+  pqView* view = pqActiveObjects::instance().activeView();
+  vtkSMViewProxy* smview = view->getViewProxy();
+
+  std::string glanceFile;
+  if (dialog.embedInGlanceHtml())
+  {
+    glanceFile = dialog.paraviewGlanceFileName().toStdString();
+  }
+  const char* glanceFileCStr = glanceFile.empty() ? nullptr : glanceFile.c_str();
+
+  this->Helper->ExportToVtkJs(dialog.saveFileName().toStdString().c_str(), smview, glanceFileCStr,
+    dialog.writeTextures(), dialog.writeTextureLODs(),
+    dialog.textureLODsBaseUrl().toStdString().c_str(), dialog.textureLODsBaseSize());
 }
 
 void pqOpenVRDockPanel::multiSampleChanged(int state)
