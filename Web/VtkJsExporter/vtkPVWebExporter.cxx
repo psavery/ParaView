@@ -286,6 +286,19 @@ void vtkPVWebExporter::Write()
       throw 1;
     }
 
+    for (const auto& file : this->FilesToZip)
+    {
+      // Zip the files that the base class has set
+      PyObject_CallMethod(module, const_cast<char*>("convertDirectoryToZipFile"),
+        const_cast<char*>("(s)"), const_cast<char*>(file.c_str()));
+      if (PyErr_Occurred())
+      {
+        vtkGenericWarningMacro("Failed to zip file");
+        throw 1;
+      }
+    }
+    this->FilesToZip.clear();
+
     if (this->ParaViewGlanceHTML)
     {
       PyObject_CallMethod(module, const_cast<char*>("addDataToViewer"), const_cast<char*>("(ss)"),

@@ -123,7 +123,9 @@ public:
   // Export the data to VTK.js
   void ExportToVtkJs(const char* outFile, vtkSMViewProxy* view, const char* glanceFile = nullptr,
     bool writeTextures = false, bool writeTextureLODs = false,
-    const char* textureLODsBaseUrl = nullptr, size_t textureLODsBaseSize = 100000);
+    const char* textureLODsBaseUrl = nullptr, size_t textureLODsBaseSize = 100000,
+    bool writePolyLODs = false, const char* polyLODsBaseUrl = nullptr,
+    size_t polyLODsBaseSize = 100000);
 
   // support for collaboration. The collaboration client
   // will always be set even when collaboration is not

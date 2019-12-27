@@ -75,6 +75,9 @@ void pqExportToVtkJsDialog::saveSettings() const
   settings->setValue("writeTextureLODs", this->writeTextureLODs());
   settings->setValue("textureLODsBaseUrl", this->textureLODsBaseUrl());
   settings->setValue("textureLODsBaseSize", static_cast<qulonglong>(this->textureLODsBaseSize()));
+  settings->setValue("writePolyLODs", this->writePolyLODs());
+  settings->setValue("polyLODsBaseUrl", this->polyLODsBaseUrl());
+  settings->setValue("polyLODsBaseSize", static_cast<qulonglong>(this->polyLODsBaseSize()));
 
   settings->endGroup();
   settings->endGroup();
@@ -99,6 +102,10 @@ void pqExportToVtkJsDialog::loadSettings()
     settings->value("textureLODsBaseUrl", "").toString());
   this->Internals->textureLODsBaseSize->setValue(
     settings->value("textureLODsBaseSize", "100000").toULongLong() / 1000);
+  this->Internals->writePolyLODs->setChecked(settings->value("writePolyLODs", "false").toBool());
+  this->Internals->polyLODsBaseUrl->setText(settings->value("polyLODsBaseUrl", "").toString());
+  this->Internals->polyLODsBaseSize->setValue(
+    settings->value("polyLODsBaseSize", "100000").toULongLong() / 1000);
 
   settings->endGroup();
   settings->endGroup();
@@ -137,6 +144,21 @@ QString pqExportToVtkJsDialog::textureLODsBaseUrl() const
 size_t pqExportToVtkJsDialog::textureLODsBaseSize() const
 {
   return static_cast<size_t>(this->Internals->textureLODsBaseSize->value()) * 1000;
+}
+
+bool pqExportToVtkJsDialog::writePolyLODs() const
+{
+  return this->Internals->writePolyLODs->isChecked();
+}
+
+QString pqExportToVtkJsDialog::polyLODsBaseUrl() const
+{
+  return this->Internals->polyLODsBaseUrl->text();
+}
+
+size_t pqExportToVtkJsDialog::polyLODsBaseSize() const
+{
+  return static_cast<size_t>(this->Internals->polyLODsBaseSize->value()) * 1000;
 }
 
 void pqExportToVtkJsDialog::selectSaveFile()

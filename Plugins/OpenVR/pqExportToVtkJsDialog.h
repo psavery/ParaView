@@ -42,6 +42,9 @@ public:
   bool writeTextureLODs() const;
   QString textureLODsBaseUrl() const;
   size_t textureLODsBaseSize() const;
+  bool writePolyLODs() const;
+  QString polyLODsBaseUrl() const;
+  size_t polyLODsBaseSize() const;
 
 public slots:
   void accept() override;

@@ -182,7 +182,9 @@ void pqOpenVRDockPanel::exportToVtkJs()
 
   this->Helper->ExportToVtkJs(dialog.saveFileName().toStdString().c_str(), smview, glanceFileCStr,
     dialog.writeTextures(), dialog.writeTextureLODs(),
-    dialog.textureLODsBaseUrl().toStdString().c_str(), dialog.textureLODsBaseSize());
+    dialog.textureLODsBaseUrl().toStdString().c_str(), dialog.textureLODsBaseSize(),
+    dialog.writePolyLODs(), dialog.polyLODsBaseUrl().toStdString().c_str(),
+    dialog.polyLODsBaseSize());
 }
 
 void pqOpenVRDockPanel::multiSampleChanged(int state)
